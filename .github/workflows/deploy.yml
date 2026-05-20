@@ -8,9 +8,26 @@ on:
       - completed
 
 jobs:
-  deploy-render:
+  check-ci-status:
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' && secrets.RENDER_DEPLOY_HOOK_URL != ''
+    if: github.event.workflow_run.head_branch == 'main'
+    outputs:
+      ci-passed: ${{ steps.check.outputs.ci-passed }}
+    steps:
+      - name: Check CI status
+        id: check
+        run: |
+          if [ "${{ github.event.workflow_run.conclusion }}" = "success" ]; then
+            echo "ci-passed=true" >> $GITHUB_OUTPUT
+          else
+            echo "CI workflow failed. Skipping deployment."
+            echo "ci-passed=false" >> $GITHUB_OUTPUT
+          fi
+
+  deploy-render:
+    needs: check-ci-status
+    runs-on: ubuntu-latest
+    if: needs.check-ci-status.outputs.ci-passed == 'true' && secrets.RENDER_DEPLOY_HOOK_URL != ''
 
     steps:
       - name: Trigger Render deploy hook
@@ -19,8 +36,9 @@ jobs:
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
 
   deploy-railway:
+    needs: check-ci-status
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' && secrets.RAILWAY_DEPLOY_HOOK_URL != ''
+    if: needs.check-ci-status.outputs.ci-passed == 'true' && secrets.RAILWAY_DEPLOY_HOOK_URL != ''
 
     steps:
       - name: Trigger Railway deploy hook
