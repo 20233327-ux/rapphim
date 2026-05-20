@@ -1,0 +1,29 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
+
+jobs:
+  deploy-render:
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' && secrets.RENDER_DEPLOY_HOOK_URL != ''
+
+    steps:
+      - name: Trigger Render deploy hook
+        run: curl --fail --show-error --silent -X POST "$RENDER_DEPLOY_HOOK_URL"
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+
+  deploy-railway:
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' && secrets.RAILWAY_DEPLOY_HOOK_URL != ''
+
+    steps:
+      - name: Trigger Railway deploy hook
+        run: curl --fail --show-error --silent -X POST "$RAILWAY_DEPLOY_HOOK_URL"
+        env:
+          RAILWAY_DEPLOY_HOOK_URL: ${{ secrets.RAILWAY_DEPLOY_HOOK_URL }}

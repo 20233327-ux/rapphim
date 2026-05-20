@@ -1,0 +1,413 @@
+openapi: 3.0.3
+info:
+  title: CinemaHub API
+  version: 1.0.0
+  description: REST API for CinemaHub cinema management system.
+servers:
+  - url: http://localhost:4000
+    description: Local API server
+
+tags:
+  - name: health
+  - name: auth
+  - name: data
+  - name: resources
+
+paths:
+  /api/health:
+    get:
+      tags: [health]
+      summary: Health check
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+        '500':
+          description: Service unhealthy
+
+  /api/auth/login:
+    post:
+      tags: [auth]
+      summary: Login and issue access/refresh tokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Missing input
+        '401':
+          description: Invalid credentials
+
+  /api/auth/refresh:
+    post:
+      tags: [auth]
+      summary: Refresh access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Missing refresh token
+        '401':
+          description: Refresh token invalid/expired
+
+  /api/auth/me:
+    get:
+      tags: [auth]
+      summary: Get current authenticated user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/UserProfile'
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+
+  /api/data:
+    get:
+      tags: [data]
+      summary: Get full application snapshot
+      responses:
+        '200':
+          description: Full app data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppData'
+        '500':
+          description: Failed to load data
+    put:
+      tags: [data]
+      summary: Replace full application snapshot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppData'
+      responses:
+        '200':
+          description: Save success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+        '500':
+          description: Failed to save data
+
+  /api/resources/{resource}:
+    get:
+      tags: [resources]
+      summary: Get list for a resource
+      parameters:
+        - $ref: '#/components/parameters/resource'
+      responses:
+        '200':
+          description: Resource list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        '404':
+          description: Resource not found
+    post:
+      tags: [resources]
+      summary: Create resource item
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/resource'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '201':
+          description: Created
+        '400':
+          description: Missing id field
+        '401':
+          description: Unauthorized
+        '404':
+          description: Resource not found
+        '409':
+          description: Duplicate id
+
+  /api/resources/{resource}/{id}:
+    put:
+      tags: [resources]
+      summary: Update resource item
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/resource'
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '401':
+          description: Unauthorized
+        '404':
+          description: Resource or item not found
+    delete:
+      tags: [resources]
+      summary: Delete resource item
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/resource'
+        - $ref: '#/components/parameters/id'
+      responses:
+        '204':
+          description: Deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Resource or item not found
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    resource:
+      name: resource
+      in: path
+      required: true
+      schema:
+        type: string
+        enum: [movies, rooms, showtimes, users, bookings, shifts]
+    id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+
+  schemas:
+    LoginRequest:
+      type: object
+      required: [identifier, password]
+      properties:
+        identifier:
+          type: string
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      required: [token, refreshToken, user]
+      properties:
+        token:
+          type: string
+        refreshToken:
+          type: string
+        user:
+          $ref: '#/components/schemas/UserProfile'
+
+    UserProfile:
+      type: object
+      required: [id, name, email, role]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [admin, manager, staff, customer]
+
+    Movie:
+      type: object
+      required: [id, code, title, description, duration, genre, rating, posterUrl, director, actors, releaseDate, endDate, status]
+      properties:
+        id: { type: string }
+        code: { type: string }
+        title: { type: string }
+        description: { type: string }
+        duration: { type: integer }
+        genre:
+          type: array
+          items: { type: string }
+        rating: { type: string }
+        posterUrl: { type: string }
+        trailerUrl: { type: string, nullable: true }
+        director: { type: string }
+        actors:
+          type: array
+          items: { type: string }
+        releaseDate: { type: string, format: date }
+        endDate: { type: string, format: date }
+        status:
+          type: string
+          enum: [now-showing, coming-soon, stopped]
+
+    Room:
+      type: object
+      required: [id, code, name, capacity, rows, cols, type]
+      properties:
+        id: { type: string }
+        code: { type: string }
+        name: { type: string }
+        capacity: { type: integer }
+        rows: { type: integer }
+        cols: { type: integer }
+        type:
+          type: string
+          enum: [2D, 3D, IMAX, 4DX]
+
+    Showtime:
+      type: object
+      required: [id, movieId, roomId, startTime, endTime, basePrice]
+      properties:
+        id: { type: string }
+        movieId: { type: string }
+        roomId: { type: string }
+        startTime: { type: string, format: date-time }
+        endTime: { type: string, format: date-time }
+        basePrice: { type: integer }
+
+    User:
+      type: object
+      required: [id, name, email, phone, role]
+      properties:
+        id: { type: string }
+        code: { type: string, nullable: true }
+        name: { type: string }
+        email: { type: string }
+        phone: { type: string }
+        username: { type: string, nullable: true }
+        role:
+          type: string
+          enum: [admin, manager, staff, customer]
+        points: { type: integer, nullable: true }
+        address: { type: string, nullable: true }
+
+    Booking:
+      type: object
+      required: [id, userId, showtimeId, movieId, seatIds, totalPrice, paymentMethod, status, createdAt]
+      properties:
+        id: { type: string }
+        userId: { type: string }
+        showtimeId: { type: string }
+        movieId: { type: string }
+        seatIds:
+          type: array
+          items: { type: string }
+        totalPrice: { type: integer }
+        paymentMethod:
+          type: string
+          enum: [vnpay, momo, credit-card, cash]
+        status:
+          type: string
+          enum: [pending, completed, cancelled]
+        createdAt: { type: string, format: date-time }
+        qrCode: { type: string, nullable: true }
+
+    Shift:
+      type: object
+      required: [id, staffId, type, date, revenue, status]
+      properties:
+        id: { type: string }
+        staffId: { type: string }
+        type:
+          type: string
+          enum: [morning, afternoon, evening]
+        date: { type: string, format: date }
+        revenue: { type: integer }
+        status:
+          type: string
+          enum: [scheduled, completed, absent]
+
+    AppData:
+      type: object
+      required: [movies, rooms, showtimes, users, bookings, shifts]
+      properties:
+        movies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Movie'
+        rooms:
+          type: array
+          items:
+            $ref: '#/components/schemas/Room'
+        showtimes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Showtime'
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        bookings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Booking'
+        shifts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Shift'

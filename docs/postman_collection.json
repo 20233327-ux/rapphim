@@ -1,0 +1,703 @@
+{
+  "info": {
+    "name": "CinemaHub API Collection",
+    "description": "Postman collection for CinemaHub authentication, snapshot data, and resource CRUD APIs.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00 - Health",
+      "item": [
+        {
+          "name": "GET /api/health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "health"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "01 - Auth",
+      "item": [
+        {
+          "name": "POST /api/auth/login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"admin@cinema.com\",\n  \"password\": \"Admin@123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.token) pm.collectionVariables.set('accessToken', data.token);",
+                  "  if (data.refreshToken) pm.collectionVariables.set('refreshToken', data.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/auth/refresh",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "refresh"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.token) pm.collectionVariables.set('accessToken', data.token);",
+                  "  if (data.refreshToken) pm.collectionVariables.set('refreshToken', data.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/auth/me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Data Snapshot",
+      "item": [
+        {
+          "name": "GET /api/data",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/data",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "data"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PUT /api/data",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"movies\": [],\n  \"rooms\": [],\n  \"showtimes\": [],\n  \"users\": [],\n  \"bookings\": [],\n  \"shifts\": []\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/data",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "data"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Movies",
+      "item": [
+        {
+          "name": "GET /api/resources/movies",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/resources/movies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "resources",
+                "movies"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /api/resources/movies",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{id}}\",\n  \"code\": \"M999\",\n  \"title\": \"Demo Movie\",\n  \"description\": \"Demo description\",\n  \"duration\": 120,\n  \"genre\": [\"Action\"],\n  \"rating\": \"PG-13\",\n  \"posterUrl\": \"https://example.com/poster.jpg\",\n  \"director\": \"Demo Director\",\n  \"actors\": [\"Actor A\"],\n  \"releaseDate\": \"2026-01-01\",\n  \"endDate\": \"2026-02-01\",\n  \"status\": \"coming-soon\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/resources/movies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "resources",
+                "movies"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PUT /api/resources/movies/:id",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Demo Movie\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/resources/movies/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "resources",
+                "movies",
+                "{{id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /api/resources/movies/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/resources/movies/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "resources",
+                "movies",
+                "{{id}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Rooms",
+      "item": [
+        {
+          "name": "GET /api/resources/rooms",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/resources/rooms",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "resources",
+                "rooms"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /api/resources/rooms",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{id}}\",\n  \"code\": \"R999\",\n  \"name\": \"Demo Room\",\n  \"capacity\": 100,\n  \"rows\": 10,\n  \"cols\": 10,\n  \"type\": \"2D\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/resources/rooms",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "resources",
+                "rooms"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PUT /api/resources/rooms/:id",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Demo Room\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/resources/rooms/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "resources",
+                "rooms",
+                "{{id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /api/resources/rooms/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/resources/rooms/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "resources",
+                "rooms",
+                "{{id}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Showtimes",
+      "item": [
+        {
+          "name": "GET /api/resources/showtimes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/resources/showtimes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "resources",
+                "showtimes"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /api/resources/showtimes",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{id}}\",\n  \"movieId\": \"1\",\n  \"roomId\": \"R1\",\n  \"startTime\": \"2026-05-20T10:00:00.000Z\",\n  \"endTime\": \"2026-05-20T12:00:00.000Z\",\n  \"basePrice\": 100000\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/resources/showtimes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "resources",
+                "showtimes"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PUT /api/resources/showtimes/:id",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"basePrice\": 120000\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/resources/showtimes/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "resources",
+                "showtimes",
+                "{{id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /api/resources/showtimes/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/resources/showtimes/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "resources",
+                "showtimes",
+                "{{id}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 - Bookings",
+      "item": [
+        {
+          "name": "GET /api/resources/bookings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/resources/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "resources",
+                "bookings"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /api/resources/bookings",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{id}}\",\n  \"userId\": \"U1\",\n  \"showtimeId\": \"S1\",\n  \"movieId\": \"1\",\n  \"seatIds\": [\"A1\"],\n  \"totalPrice\": 100000,\n  \"paymentMethod\": \"cash\",\n  \"status\": \"pending\",\n  \"createdAt\": \"2026-05-20T08:00:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/resources/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "resources",
+                "bookings"
+              ]
+            }
+          }
+        },
+        {
+          "name": "PUT /api/resources/bookings/:id",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"completed\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/resources/bookings/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "resources",
+                "bookings",
+                "{{id}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /api/resources/bookings/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/resources/bookings/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "resources",
+                "bookings",
+                "{{id}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 - Users",
+      "item": [
+        {
+          "name": "GET /api/resources/users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/resources/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "resources",
+                "users"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 - Shifts",
+      "item": [
+        {
+          "name": "GET /api/resources/shifts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/resources/shifts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "resources",
+                "shifts"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    },
+    {
+      "key": "resource",
+      "value": "movies"
+    },
+    {
+      "key": "id",
+      "value": "DEMO_ID"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: cinemahub-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${DB_NAME:-cinemahub}
+      POSTGRES_USER: ${DB_USER:-cinemahub}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-cinemahub123}
+      TZ: ${TZ:-Asia/Ho_Chi_Minh}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/migrations/001_init.sql:/docker-entrypoint-initdb.d/001_init.sql:ro
+      - ./db/seed/001_seed.sql:/docker-entrypoint-initdb.d/002_seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-cinemahub} -d ${DB_NAME:-cinemahub}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  postgres_data:
