@@ -64,6 +64,8 @@ Default seeded login credentials after migrations:
 - Admin: `admin@cinema.com` / `Admin@123`
 - Staff: `staff@cinema.com` / `Staff@123`
 
+See [docs/DEFAULT_CREDENTIALS.md](docs/DEFAULT_CREDENTIALS.md) for details on default accounts and security notes.
+
 Sample login request:
 
 ```bash

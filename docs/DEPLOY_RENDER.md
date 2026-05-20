@@ -119,8 +119,13 @@ https://cinemahub-xxx.onrender.com
 ```
 
 Bạn sẽ thấy giao diện CinemaHub. Thử đăng nhập với tài khoản mặc định:
-- Email: `admin@cinema.com`
-- Password: `Admin@123`
+
+| Tài khoản | Email | Mật khẩu |
+|-----------|-------|---------|
+| Admin | `admin@cinema.com` | `Admin@123` |
+| Staff | `staff@cinema.com` | `Staff@123` |
+
+**Lưu ý**: Các tài khoản này chỉ dùng cho demo. Thay đổi mật khẩu trong production. Xem chi tiết: [DEFAULT_CREDENTIALS.md](DEFAULT_CREDENTIALS.md)
 
 ## Bước 8: Setup Auto-Deploy từ GitHub Actions (tùy chọn)
 
