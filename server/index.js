@@ -697,8 +697,21 @@ async function startServer() {
   try {
     await loadAppMetadata();
 
-    if (process.env.DB_AUTO_MIGRATE !== 'false') {
-      await runMigrationsOnStartup();
+    // Only run migrations if DATABASE_URL is configured
+    if (process.env.DATABASE_URL && process.env.DB_AUTO_MIGRATE !== 'false') {
+      try {
+        await runMigrationsOnStartup();
+        console.log('Database migrations completed successfully');
+      } catch (error) {
+        console.error('Database migration failed:', error.message);
+        if (process.env.NODE_ENV === 'production') {
+          process.exit(1);
+        }
+        // In development, log but continue
+        console.warn('Continuing startup without database (dev mode)');
+      }
+    } else if (!process.env.DATABASE_URL) {
+      console.warn('DATABASE_URL not set. Running in API-only mode without database.');
     }
 
     await configureStaticHosting();
