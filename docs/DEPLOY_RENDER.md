@@ -142,14 +142,42 @@ Bạn sẽ thấy giao diện CinemaHub. Thử đăng nhập với tài khoản 
 
 ## Troubleshooting
 
-### Deploy lỗi "Database connection failed"
+### Deploy lỗi "Error: connect ECONNREFUSED 127.0.0.1:5432"
 
-**Nguyên nhân**: `DATABASE_URL` sai hoặc DB chưa sẵn sàng
+**Nguyên nhân**: `DATABASE_URL` chưa được set hoặc DB chưa tạo
+
+**Cách khắc phục** (quan trọng - theo thứ tự):
+1. **Bước 1: Tạo PostgreSQL trước** - Vào Render, tạo Database service, chờ 1-2 phút để khởi động
+2. **Bước 2: Copy Internal Database URL** - Từ database info, sao chép URL (không phải External URL)
+3. **Bước 3: Điền DATABASE_URL vào env** - Trước khi tạo Web Service, thêm biến `DATABASE_URL` với giá trị từ bước 2
+4. **Bước 4: Deploy Web Service** - Sau đó tạo/deploy Web Service
+
+**Nếu đã deploy mà quên DATABASE_URL**:
+- Vào service → **Environment**
+- Thêm/sửa `DATABASE_URL` thành Internal URL
+- Bấm **Save**
+- Render sẽ tự động redeploy
+
+### Deploy lỗi "Database connection failed" (sau khi set DATABASE_URL)
+
+**Nguyên nhân**: URL sai format hoặc DB chưa ready
 
 **Cách khắc phục**:
-- Kiểm tra `DATABASE_URL` là **Internal URL** chứ không phải External
-- Trong Render, vào database service, kiểm tra status có phải **Available** không
-- Thử set `DB_AUTO_MIGRATE=false` tạm, deploy lại, rồi kiểm tra logs
+- Kiểm tra `DATABASE_URL` bắt đầu bằng `postgres://` hoặc `postgresql://`
+- Không dùng **External Database URL** (nó chỉ cho kết nối từ bên ngoài)
+- Dùng **Internal Database URL** (cho kết nối từ services bên trong Render)
+- Trong database info, xác nhận status là **Available** (không phải Building)
+- Nếu DB vừa mới tạo, chờ thêm 30 giây rồi thử lại
+
+### Deploy lỗi "Health check failed"
+
+**Nguyên nhân**: Service bị restart vì health check fail
+
+**Cách khắc phục**:
+- Vào **Logs** xem error chi tiết
+- Đảm bảo `DATABASE_URL` chính xác (xem hướng dẫn trên)
+- Tạm thời set `DB_AUTO_MIGRATE=false` trong env để bỏ qua auto-migration, deploy lại
+- Sau khi service live, sửa `DB_AUTO_MIGRATE=true` rồi thử lại
 
 ### Build lỗi npm
 
