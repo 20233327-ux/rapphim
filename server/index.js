@@ -108,12 +108,21 @@ async function runSqlScriptsOnce(files, category) {
   for (const file of files) {
     const migrationKey = `${category}:${file.name}`;
     const exists = await pool.query('SELECT 1 FROM schema_migrations WHERE name = $1 LIMIT 1', [migrationKey]);
-    if (exists.rowCount > 0) continue;
+    if (exists.rowCount > 0) {
+      console.log(`Skipping ${migrationKey} (already applied)`);
+      continue;
+    }
 
-    const sql = await fs.readFile(file.absolutePath, 'utf8');
-    await pool.query(sql);
-    await pool.query('INSERT INTO schema_migrations (name) VALUES ($1)', [migrationKey]);
-    console.log(`Applied ${migrationKey}`);
+    try {
+      const sql = await fs.readFile(file.absolutePath, 'utf8');
+      console.log(`Running ${migrationKey}...`);
+      await pool.query(sql);
+      await pool.query('INSERT INTO schema_migrations (name) VALUES ($1)', [migrationKey]);
+      console.log(`✓ Applied ${migrationKey}`);
+    } catch (error) {
+      console.error(`✗ Error applying ${migrationKey}:`, error.message);
+      throw error;
+    }
   }
 }
 
