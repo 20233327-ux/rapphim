@@ -27,7 +27,7 @@ jobs:
   deploy-render:
     needs: check-ci-status
     runs-on: ubuntu-latest
-    if: needs.check-ci-status.outputs.ci-passed == 'true' && secrets.RENDER_DEPLOY_HOOK_URL != ''
+    if: needs.check-ci-status.outputs.ci-passed == 'true'
 
     steps:
       - name: Trigger Render deploy hook
@@ -38,7 +38,7 @@ jobs:
   deploy-railway:
     needs: check-ci-status
     runs-on: ubuntu-latest
-    if: needs.check-ci-status.outputs.ci-passed == 'true' && secrets.RAILWAY_DEPLOY_HOOK_URL != ''
+    if: needs.check-ci-status.outputs.ci-passed == 'true'
 
     steps:
       - name: Trigger Railway deploy hook
