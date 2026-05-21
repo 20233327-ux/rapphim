@@ -501,6 +501,68 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+app.post('/api/auth/register', async (req, res) => {
+  const { name, email, password, phone } = req.body || {};
+  
+  // Validate input
+  if (!name || !email || !password) {
+    return res.status(400).json({ message: 'name, email, and password are required' });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+  }
+
+  if (!email.includes('@')) {
+    return res.status(400).json({ message: 'Invalid email format' });
+  }
+
+  try {
+    // Check if email already exists
+    const existingUser = await pool.query(
+      'SELECT id FROM users WHERE LOWER(email) = LOWER($1)',
+      [email]
+    );
+
+    if (existingUser.rowCount > 0) {
+      return res.status(409).json({ message: 'Email already registered' });
+    }
+
+    // Hash password
+    const saltRounds = 10;
+    const passwordHash = await bcrypt.hash(password, saltRounds);
+
+    // Generate user ID
+    const userId = `U${Date.now()}`;
+
+    // Insert new user
+    const insertResult = await pool.query(
+      `INSERT INTO users (id, name, email, phone, password_hash, role, points, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, 'customer', 0, NOW(), NOW())
+       RETURNING id, name, email, role`,
+      [userId, name, email, phone || null, passwordHash]
+    );
+
+    const user = insertResult.rows[0];
+    const token = createAuthToken(user);
+    const refreshToken = createRefreshToken(user);
+
+    return res.status(201).json({
+      token,
+      refreshToken,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error('Registration error:', error);
+    return res.status(500).json({ message: 'Registration failed', error: error.message });
+  }
+});
+
 app.post('/api/auth/refresh', async (req, res) => {
   const { refreshToken } = req.body || {};
   if (!refreshToken) {

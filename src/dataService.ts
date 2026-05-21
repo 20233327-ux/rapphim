@@ -137,6 +137,26 @@ export const dataService = {
     return payload;
   },
 
+  register: async (name: string, email: string, password: string, phone?: string): Promise<LoginResponse> => {
+    const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name, email, password, phone: phone || null }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Đăng ký thất bại');
+    }
+
+    const payload = (await response.json()) as LoginResponse;
+    dataService.setAuthToken(payload.token);
+    dataService.setRefreshToken(payload.refreshToken);
+    return payload;
+  },
+
   getCurrentUser: async (): Promise<MeResponse['user'] | null> => {
     const response = await dataService.authorizedFetch(`${API_BASE_URL}/api/auth/me`);
 

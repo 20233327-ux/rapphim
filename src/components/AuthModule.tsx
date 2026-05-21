@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Lock, User as UserIcon, Shield, ArrowRight, Eye, EyeOff, Film, AlertCircle } from 'lucide-react';
+import { Mail, Lock, User as UserIcon, Shield, ArrowRight, Eye, EyeOff, Film, AlertCircle, Phone } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { User } from '../types';
 import { dataService } from '../dataService';
@@ -12,20 +12,24 @@ interface AuthModuleProps {
 export const AuthModule: React.FC<AuthModuleProps> = ({ users, onLogin }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   
   // Form fields
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [username, setUsername] = useState('');
+  const [phone, setPhone] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setLoading(true);
 
-    if (isLogin) {
-      try {
+    try {
+      if (isLogin) {
         const payload = await dataService.login(email, password);
         const fullUser = users.find((u) => u.id === payload.user.id);
 
@@ -41,14 +45,55 @@ export const AuthModule: React.FC<AuthModuleProps> = ({ users, onLogin }) => {
           phone: '',
           role: payload.user.role,
         });
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'Email/Ten dang nhap hoac mat khau khong chinh xac';
-        setError(message);
+      } else {
+        // Validation for registration
+        if (!name.trim()) {
+          setError('Vui lòng nhập họ và tên');
+          return;
+        }
+
+        if (!email.includes('@')) {
+          setError('Email không hợp lệ');
+          return;
+        }
+
+        if (password.length < 6) {
+          setError('Mật khẩu phải ít nhất 6 ký tự');
+          return;
+        }
+
+        if (password !== confirmPassword) {
+          setError('Mật khẩu không khớp');
+          return;
+        }
+
+        // Call register API
+        const payload = await dataService.register(name, email, password, phone || undefined);
+        
+        onLogin({
+          id: payload.user.id,
+          name: payload.user.name,
+          email: payload.user.email,
+          phone: phone || '',
+          role: payload.user.role,
+        });
       }
-    } else {
-      // Logic for registration (optional, but let's just show an error or mock it)
-      setError('Chức năng đăng ký hiện đang được bảo trì. Vui lòng liên hệ quản trị viên.');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Đã xảy ra lỗi';
+      setError(message);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleSwitchMode = (loginMode: boolean) => {
+    setIsLogin(loginMode);
+    setError(null);
+    setEmail('');
+    setPassword('');
+    setName('');
+    setPhone('');
+    setConfirmPassword('');
   };
 
   return (
@@ -73,13 +118,13 @@ export const AuthModule: React.FC<AuthModuleProps> = ({ users, onLogin }) => {
           
           <div className="flex bg-zinc-900 p-1 rounded-2xl mb-8">
             <button 
-              onClick={() => setIsLogin(true)}
+              onClick={() => handleSwitchMode(true)}
               className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${isLogin ? 'bg-zinc-800 text-white shadow-lg' : 'text-zinc-500 hover:text-zinc-300'}`}
             >
               Đăng nhập
             </button>
             <button 
-              onClick={() => setIsLogin(false)}
+              onClick={() => handleSwitchMode(false)}
               className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${!isLogin ? 'bg-zinc-800 text-white shadow-lg' : 'text-zinc-500 hover:text-zinc-300'}`}
             >
               Đăng ký
@@ -102,6 +147,17 @@ export const AuthModule: React.FC<AuthModuleProps> = ({ users, onLogin }) => {
                       placeholder="Họ và tên"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
+                      className="w-full pl-12 pr-4 py-4 bg-zinc-900/50 border border-zinc-900 rounded-2xl text-white outline-none focus:border-yellow-500/50 focus:ring-4 focus:ring-yellow-500/5 transition-all"
+                    />
+                  </div>
+
+                  <div className="relative group">
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-yellow-500 transition-colors" size={20} />
+                    <input 
+                      type="tel" 
+                      placeholder="Số điện thoại (tùy chọn)"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
                       className="w-full pl-12 pr-4 py-4 bg-zinc-900/50 border border-zinc-900 rounded-2xl text-white outline-none focus:border-yellow-500/50 focus:ring-4 focus:ring-yellow-500/5 transition-all"
                     />
                   </div>
@@ -140,6 +196,35 @@ export const AuthModule: React.FC<AuthModuleProps> = ({ users, onLogin }) => {
               </button>
             </div>
 
+            <AnimatePresence mode="wait">
+              {!isLogin && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                >
+                  <div className="relative group">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-yellow-500 transition-colors" size={20} />
+                    <input 
+                      type={showConfirmPassword ? "text" : "password"} 
+                      placeholder="Nhập lại mật khẩu"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required={!isLogin}
+                      className="w-full pl-12 pr-12 py-4 bg-zinc-900/50 border border-zinc-900 rounded-2xl text-white outline-none focus:border-yellow-500/50 focus:ring-4 focus:ring-yellow-500/5 transition-all"
+                    />
+                    <button 
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors"
+                    >
+                      {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {error && (
               <motion.div 
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -153,10 +238,20 @@ export const AuthModule: React.FC<AuthModuleProps> = ({ users, onLogin }) => {
 
             <button 
               type="submit"
-              className="w-full py-4 bg-yellow-500 text-black rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-yellow-400 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-yellow-500/20"
+              disabled={loading}
+              className="w-full py-4 bg-yellow-500 text-black rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-yellow-400 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-yellow-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLogin ? 'Đăng nhập ngay' : 'Tạo tài khoản'}
-              <ArrowRight size={20} />
+              {loading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                  {isLogin ? 'Đang xử lý...' : 'Đang tạo...'}
+                </>
+              ) : (
+                <>
+                  {isLogin ? 'Đăng nhập ngay' : 'Tạo tài khoản'}
+                  <ArrowRight size={20} />
+                </>
+              )}
             </button>
           </form>
 
