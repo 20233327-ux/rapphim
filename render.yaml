@@ -8,6 +8,8 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: DATABASE_URL
+        value: postgresql://cinemahub:UBdW5T9icfdlzvCDQIYPyj7ID54rlNfi@dpg-d86uj6dckfvc73bjrip0-a/cinemahub_ta0l
       - key: DB_AUTO_MIGRATE
         value: "true"
       - key: DB_RUN_SEED
