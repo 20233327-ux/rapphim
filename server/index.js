@@ -535,12 +535,17 @@ app.post('/api/auth/register', async (req, res) => {
     // Generate user ID
     const userId = `U${Date.now()}`;
 
-    // Insert new user
+    // AUTHORIZATION POLICY: Self-registered users are always 'customer' role
+    // Only admins can create users with other roles (staff, admin, manager)
+    const defaultRole = 'customer';
+    console.log(`[REGISTER] New user ${email} assigned role: ${defaultRole}`);
+
+    // Insert new user with customer role
     const insertResult = await pool.query(
       `INSERT INTO users (id, name, email, phone, password_hash, role, points, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, 'customer', 0, NOW(), NOW())
+       VALUES ($1, $2, $3, $4, $5, $6, 0, NOW(), NOW())
        RETURNING id, name, email, role`,
-      [userId, name, email, phone || null, passwordHash]
+      [userId, name, email, phone || null, passwordHash, defaultRole]
     );
 
     const user = insertResult.rows[0];
